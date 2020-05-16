@@ -4,6 +4,9 @@ pytest-asyncio==0.12.0
 Flask==1.1.2
 envparse==0.2.0
 marshmallow==3.6.0
+requests==2.23.0
+requests-mock==1.8.0
+pytest-flask==1.0.0
 
 
 # linters пока не использовать - надо научиться их конфигурировать

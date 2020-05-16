@@ -1,6 +1,7 @@
 from subprocess import Popen, PIPE
 from urllib.parse import urlparse
 import os
+from app import app
 
 import pytest
 import asyncpg
@@ -11,6 +12,7 @@ from hotline_db.orders import TechOrder, insert_tech_order_to_db
 
 TEST_DATABASE_URL = "postgres://postgres:dbpass@0.0.0.0:5432/db"
 path_to_migrations = "./hotline_db/migrations/"
+TEST_API_SERVICE_URL = "http://127.0.0.1:5000"
 
 TABLES_TO_BE_CLEANED = ["tech_orders"]
 
@@ -35,6 +37,12 @@ def _execute_psql(cmd: str):
 
 
 @pytest.fixture(scope="session", autouse=True)
+def test_client():
+    client = app.test_client()
+    return client
+
+
+@pytest.fixture(scope="session", autouse=True)
 def db_initialer():
     _execute_psql(
         """
@@ -53,6 +61,13 @@ def _run_migrations(path_to_migrations):
     stdout, stderr = proc.communicate()
     if proc.returncode:
         raise Exception("Error during running command %s: \n %s" % (command, stderr))
+
+# todo luchanos потом вынести в отдельный utils
+test_order_dict = {
+    "user_id": 1,
+    "text_message": "тестовое сообщение",
+    "lol": "kek"  # лишнее поле (специально для тестирования)
+}
 
 
 @pytest.fixture
@@ -103,19 +118,24 @@ async def test_create_tech_order(db_pool_test):
 
 @pytest.mark.usefixtures("clean_test_tables")
 @pytest.mark.asyncio
-async def test_create_tech_order_via_http(db_pool_test):
-    # todo luchanos написать тест с ioresponses для формирования заявки после продёргивания ручки
+async def test_create_tech_order_via_http(test_client):
+    """Дёргаем ручку, проверяем, что формируется заявка и записывается в БД."""
+    # todo luchanos поднимаем тестовый клиент - в этом месте этот способ сработал
+    with test_client as client:
+        resp = client.post("/new_order", json=test_order_dict)
+        c = 1
+
+
+@pytest.mark.usefixtures("clean_test_tables")
+@pytest.mark.asyncio
+async def test_create_tech_order_via_http_with_error(db_pool_test):
+    """Дёргаем ручку, проверяем, что формируется заявка и записывается в БД."""
     pass
 
 
 @pytest.mark.usefixtures("clean_test_tables")
 @pytest.mark.asyncio
 async def test_new_order_schema():
-    test_order_dict = {
-        "user_id": 1,
-        "text_message": "тестовое сообщение",
-        "lol": "kek"
-    }
     new_order_schema = NewOrderSchema(unknown=EXCLUDE)
     processed_data = new_order_schema.load(test_order_dict)
     assert "lol" not in processed_data
