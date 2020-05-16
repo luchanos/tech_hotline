@@ -3,10 +3,11 @@ asyncpg==0.20.1
 pytest-asyncio==0.12.0
 Flask==1.1.2
 envparse==0.2.0
+marshmallow==3.6.0
 
 
-# linters
-isort==4.3.21
-flake8==3.7.9
-black==19.10b0
-pre-commit==2.2.0
+# linters пока не использовать - надо научиться их конфигурировать
+# isort==4.3.21
+# flake8==3.7.9
+# black==19.10b0
+# pre-commit==2.2.0

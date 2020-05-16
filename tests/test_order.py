@@ -4,7 +4,9 @@ import os
 
 import pytest
 import asyncpg
+from marshmallow import EXCLUDE
 
+from schemas.orders import NewOrderSchema
 from hotline_db.orders import TechOrder, insert_tech_order_to_db
 
 TEST_DATABASE_URL = "postgres://postgres:dbpass@0.0.0.0:5432/db"
@@ -97,3 +99,25 @@ async def test_create_tech_order(db_pool_test):
     assert result["order_videos"] == order_videos
     assert result["order_sounds"] == order_sounds
     assert order_id == order_id
+
+
+@pytest.mark.usefixtures("clean_test_tables")
+@pytest.mark.asyncio
+async def test_create_tech_order_via_http(db_pool_test):
+    # todo luchanos написать тест с ioresponses для формирования заявки после продёргивания ручки
+    pass
+
+
+@pytest.mark.usefixtures("clean_test_tables")
+@pytest.mark.asyncio
+async def test_new_order_schema():
+    test_order_dict = {
+        "user_id": 1,
+        "text_message": "тестовое сообщение",
+        "lol": "kek"
+    }
+    new_order_schema = NewOrderSchema(unknown=EXCLUDE)
+    processed_data = new_order_schema.load(test_order_dict)
+    assert "lol" not in processed_data
+    assert processed_data["text_message"] == test_order_dict["text_message"]
+    assert processed_data["user_id"] == test_order_dict["user_id"]
